@@ -1,11 +1,11 @@
 from crawler.crawler_items import CrawlerItem
-from scrapy.spider import BaseSpider
+from scrapy.spider import Spider
 from scrapy.selector import HtmlXPathSelector
 import sys
 import scrapy
 import ast
 
-class CrawlerSpider(BaseSpider):
+class CrawlerSpider(Spider):
     name = "crawler"
 
     def __init__(self, domain=None, start_urls=None, cookies=None):
@@ -19,8 +19,7 @@ class CrawlerSpider(BaseSpider):
     def parse_2(self, response):        
         print "Entered"
         item = CrawlerItem()
-        hxs = HtmlXPathSelector(response)
-        titles = hxs.select("//input")        
+        titles = response.xpath("//input")
         item["form"] = []
         item["url"] = response.url
         for title in titles:
