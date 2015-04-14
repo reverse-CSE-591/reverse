@@ -20,24 +20,17 @@ class CrawlerSpider(Spider):
         self.urlItem["links"] = [] 
 	      
     def start_requests(self):
-        return [scrapy.Request(url=self.start_urls[0], cookies=self.cookies, callback=self.parse_1)]
+        return [scrapy.Request(url=self.start_urls[0], cookies=self.cookies, callback=self.parse_2)]
 
     def parse_2(self, response):        
         print "Entered"
         item = CrawlerItem()
         titles = response.xpath("//input")
+        formTitle = response.xpath("//form/@action")        
         item["form"] = []
         item["url"] = response.url
+        for formt in formTitle:
+            item["form"].append("action::"+formt.extract())  
         for title in titles:
-            item["form"].append(title.extract())            
-        return item
-
-    def parse_1(self, response):
-        path = urlparse(response.url).scheme + '://' + urlparse(response.url).netloc
-        for url in response.xpath('//a/@href').extract():
-            if str(path) in url:
-            	self.urlItem["links"].append(url)
-            else:
-                url = str(path)+url
-                self.urlItem["links"].append(str(path)+url)
-            yield scrapy.Request(url, callback=self.parse_1)
+            item["form"].append(title.extract())                                 
+        return item    
