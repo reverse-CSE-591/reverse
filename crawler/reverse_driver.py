@@ -1,5 +1,5 @@
 #!/usr/bin/python -tt
-################################################################################################################
+#####################################################################################################################
 # CSE 591: Security and Vulnerability Analysis
 # 
 # Team 5:
@@ -12,7 +12,7 @@
 #
 #
 # This is the driver program. Run the main function here to find potential vulnerabilities in the website
-################################################################################################################
+#####################################################################################################################
 
 # Python Imports
 import json
@@ -24,7 +24,7 @@ import re
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
 
-################################################################################################################
+#####################################################################################################################
 # This method gets all the urls present on the website by recursively crawling the pages
 # Input:
 #     startURL (String): the url to be crawled
@@ -33,7 +33,7 @@ urls = set()
 # Output:
 #     No output as it recursively crawls the pages and fills in the global Set       
 #
-################################################################################################################
+#####################################################################################################################
 
 def getAllURLs(startURL, baseURL, opener):
     try: 
@@ -53,7 +53,7 @@ def getAllURLs(startURL, baseURL, opener):
         pass
             
 
-################################################################################################################
+#####################################################################################################################
 # This method returns the form parameters and if the form exists on the page
 # Use Scrapy here to extract the form and then parse the output and return as specified below
 # Input:
@@ -64,7 +64,7 @@ def getAllURLs(startURL, baseURL, opener):
 #     params[] (List[String]):  list of parameters along with the types in the following format. (name::type::value)
 #                               ex: ["username::text::", "password::password::", button::myButton::submit]
 #     action (String): The action the form should take when submitted  
-################################################################################################################
+#####################################################################################################################
 
 def getFormForURl(domain, url, cookies):
 
@@ -94,22 +94,23 @@ def getFormForURl(domain, url, cookies):
             
     return (params, action)
 
-################################################################################################################
+#####################################################################################################################
 # This method takes in a form to be filled and the url and tries to guess valid inputs that would result in a
 # successful response from the server
 # Inputs:
 #       params[] (List[String]): list of parameters along with the types in the following format. 
 #                               ex: ["username::text", "password::password"]
 #       action (String): The action the form should take when submitted 
+#       url (String): The page URL for getting the HTML data and figuring out what to fill
 # Output:
 #       validResponse (String): returns the HTML string of the valid response
-################################################################################################################
+#####################################################################################################################
 
 def getValidResponse(params, action, url):
     # do stuff here
     return validResponse
 
-################################################################################################################
+#####################################################################################################################
 # This method takes in a form to be filled and the url and inserts <scripts> into the fields.
 # Inputs:
 #       params[] (List[String]): list of parameters along with the types in the following format. 
@@ -117,13 +118,13 @@ def getValidResponse(params, action, url):
 #       action (String): The action the form should take when submitted 
 # Output:
 #       xssResponse (String): returns the HTML response
-################################################################################################################
+#####################################################################################################################
 
 def getXssResponse(params, action):
     # do stuff here
     return xssResponse
 
-################################################################################################################
+#####################################################################################################################
 # This method takes in a form to be filled and the url and tries SQL injection in the fields
 # Inputs:
 #       params[] (List[String]): list of parameters along with the types in the following format. 
@@ -131,13 +132,13 @@ def getXssResponse(params, action):
 #       action (String): The action the form should take when submitted 
 # Output:
 #       xssResponse (String): returns the HTML response
-################################################################################################################
+#####################################################################################################################
 
 def getSqlInjResponse(params, action):
     # do stuff here
     return sqlInjResponse
 
-################################################################################################################
+#####################################################################################################################
 # This method takes in two HTML strings, compares them and assigns a similarity score. The idea is to use this 
 # score to see how similar pages with valid and invalid outputs are.
 # Inputs:
@@ -145,16 +146,16 @@ def getSqlInjResponse(params, action):
 #       html_2 (String): The second HTML page
 # Output:
 #       score (double): similarity between pages 
-################################################################################################################
+#####################################################################################################################
 
 def getSimilarityScore(html_1, html_2):
     # do stuff here
     return score
 
 
-################################################################################################################
+#####################################################################################################################
 # This is the main method that gets called and submits the report on possible vulnerabilities
-################################################################################################################
+#####################################################################################################################
 
 def main():   
     
