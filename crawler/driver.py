@@ -15,8 +15,10 @@
 ################################################################################################################
 
 # Python Imports
+import json
 import urllib2
 from lxml import html
+from os import system
 
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
@@ -32,15 +34,19 @@ urls = set()
 ################################################################################################################
 def getAllURLs(startURL, baseURL, opener):
     try: 
-        global urls        
+        global urls      
         tree = html.fromstring(opener.open(startURL).read())   
-        for url in tree.xpath('//a/@href'):        
-            if url not in urls:
-                if startURL not in url:
-                    url = baseURL + url
-                urls.add(url)
-                getAllURLs(url, baseURL, opener)                  
-    except Exception,e: 
+        for url in tree.xpath('//a/@href'):
+            if startURL not in str(url) and startURL in baseURL:
+                ext_url = baseURL + url
+	    else:
+                start_URL = startURL.rsplit('/', 1)
+	        ext_url = start_URL[0] + '/' + url
+            ext_url = str(ext_url)
+            if ext_url not in urls:
+            	urls.add(ext_url)
+            	getAllURLs(ext_url, baseURL, opener)
+    except Exception,e:
         pass
             
 
@@ -54,9 +60,17 @@ def getAllURLs(startURL, baseURL, opener):
 #                               ex: ["username::text", "password::password"]
 #     action (String): The action the form should take when submitted  
 ################################################################################################################
-def getFormForURl(url):        
-    # do stuff here
-    return (params, action)
+def getFormForURl(url, cookies):
+    system("scrapy crawl crawler -a domain=129.219.253.30:80 -a start_urls="+url+" -a cookies=\""+cookies+"\" -o items.json")
+    txt = open('items.json').read()
+    system("rm items.json")
+    #txt = dict(txt[1:-1])
+    if 'url' in txt:
+    	txt1 = json.loads(txt[1:-1])
+	print txt1['url']
+	print txt1['form']
+    print "Done"
+    #return (params, action)
 
 ################################################################################################################
 # This method takes in a form to be filled and the url and tries to guess valid inputs that would result in a
@@ -119,21 +133,21 @@ def main():
     
     # add the required headers, most likely its just the login cookie for the page.
     opener = urllib2.build_opener()
-    opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))  
+    opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
+    cookies = "{'cse591':'kP047iYtubEZ6ZnMKmxO'}"   
     
     # get all the urls from the webApplication
-    getAllURLs("https://129.219.253.30:80", "https://129.219.253.30:80", opener)
+    getAllURLs("https://129.219.253.30:80/", "https://129.219.253.30:80/", opener)
     print("urls-extracted: ", urls)
         
     # for each url crawl the page for     
     for url in urls:
-        #(params, action) = getFormForURl(url)
+        getFormForURl(url, cookies)
 
         # Get responses for valid and invalid inputs
         #validResponse = getValidResponse(params, action, url)        
         #xssResponse = getXssResponse(params, action) 
         #sqlInjResponse = getSqlInjResponse(params, action)
-        
         # Get xss and SqlInjection score 
         #xssScore = getSimilarityScore(validResponse, xssResponse)
         #sqlInjScore = getSimilarityScore(validResponse, sqlInjResponse)
