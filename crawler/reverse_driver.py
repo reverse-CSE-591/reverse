@@ -19,6 +19,7 @@ import json
 import urllib2
 from lxml import html
 from os import system
+import re
 
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
@@ -28,10 +29,12 @@ urls = set()
 # Input:
 #     startURL (String): the url to be crawled
 #     baseURL (String): This is the base url that will be appended if relative paths are used
+#     opener : used for the GET/POST request
 # Output:
 #     No output as it recursively crawls the pages and fills in the global Set       
 #
 ################################################################################################################
+
 def getAllURLs(startURL, baseURL, opener):
     try: 
         global urls      
@@ -53,24 +56,43 @@ def getAllURLs(startURL, baseURL, opener):
 ################################################################################################################
 # This method returns the form parameters and if the form exists on the page
 # Use Scrapy here to extract the form and then parse the output and return as specified below
-# Input: 
+# Input:
+#     domain (String): the domain 
 #     url (String): url to be crawled
+#     cookies (dictionary): the cookie dictionary used for logging in  
 # Outputs: 
-#     params[] (List[String]):  list of parameters along with the types in the following format. 
-#                               ex: ["username::text", "password::password"]
+#     params[] (List[String]):  list of parameters along with the types in the following format. (name::type::value)
+#                               ex: ["username::text::", "password::password::", button::myButton::submit]
 #     action (String): The action the form should take when submitted  
 ################################################################################################################
-def getFormForURl(url, cookies):
-    system("scrapy crawl crawler -a domain=129.219.253.30:80 -a start_urls="+url+" -a cookies=\""+cookies+"\" -o items.json")
-    txt = open('items.json').read()
-    system("rm items.json")
-    #txt = dict(txt[1:-1])
-    if 'url' in txt:
-    	txt1 = json.loads(txt[1:-1])
-	print txt1['url']
-	print txt1['form']
-    print "Done"
-    #return (params, action)
+
+def getFormForURl(domain, url, cookies):
+
+    system("scrapy crawl crawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+cookies+"\" -o items.json")
+    data = open('items.json').read()
+    system("rm items.json")        
+    action = ""
+    params = []
+    
+    if 'url' in data:
+        jsonData = json.loads(data[1:-1])                        
+        for element in jsonData['form']:            
+            if 'action' in element:
+                action = element.rsplit('::',1)[1]
+           
+            name = ""
+            type = ""
+            value = ""            
+            for inputPart in element.rsplit(' '):                
+                if 'name' in inputPart:
+                    name = re.sub(">", "", re.sub("\"", "", inputPart.rsplit('=',1)[1]))                                        
+                if 'type' in inputPart:
+                    type = re.sub(">", "", re.sub("\"", "", inputPart.rsplit('=',1)[1]))                  
+                if 'value' in inputPart:
+                    value = re.sub(">", "", re.sub("\"", "", inputPart.rsplit('=',1)[1]))                            
+            params.append(str(name+"::"+type+"::"+value))                                                
+            
+    return (params, action)
 
 ################################################################################################################
 # This method takes in a form to be filled and the url and tries to guess valid inputs that would result in a
@@ -82,6 +104,7 @@ def getFormForURl(url, cookies):
 # Output:
 #       validResponse (String): returns the HTML string of the valid response
 ################################################################################################################
+
 def getValidResponse(params, action, url):
     # do stuff here
     return validResponse
@@ -95,6 +118,7 @@ def getValidResponse(params, action, url):
 # Output:
 #       xssResponse (String): returns the HTML response
 ################################################################################################################
+
 def getXssResponse(params, action):
     # do stuff here
     return xssResponse
@@ -108,6 +132,7 @@ def getXssResponse(params, action):
 # Output:
 #       xssResponse (String): returns the HTML response
 ################################################################################################################
+
 def getSqlInjResponse(params, action):
     # do stuff here
     return sqlInjResponse
@@ -121,6 +146,7 @@ def getSqlInjResponse(params, action):
 # Output:
 #       score (double): similarity between pages 
 ################################################################################################################
+
 def getSimilarityScore(html_1, html_2):
     # do stuff here
     return score
@@ -129,20 +155,28 @@ def getSimilarityScore(html_1, html_2):
 ################################################################################################################
 # This is the main method that gets called and submits the report on possible vulnerabilities
 ################################################################################################################
+
 def main():   
     
     # add the required headers, most likely its just the login cookie for the page.
     opener = urllib2.build_opener()
     opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
     cookies = "{'cse591':'kP047iYtubEZ6ZnMKmxO'}"   
+    domain = "129.219.253.30:80" 
     
     # get all the urls from the webApplication
     getAllURLs("https://129.219.253.30:80/", "https://129.219.253.30:80/", opener)
     print("urls-extracted: ", urls)
+    
+    # Open report file
+    reportFile= open('reverse_report.txt','w')
         
     # for each url crawl the page for     
     for url in urls:
-        getFormForURl(url, cookies)
+        reportFile.write("url:: " + str(url) + "\n")
+        (params, action) = getFormForURl(domain, url, cookies)
+        reportFile.write("params:: " + str(params) + "\n")
+        reportFile.write("action::" + str(action) + "\n")
 
         # Get responses for valid and invalid inputs
         #validResponse = getValidResponse(params, action, url)        
@@ -153,10 +187,12 @@ def main():
         #sqlInjScore = getSimilarityScore(validResponse, sqlInjResponse)
         
         # Print the scores to see if there exists a vulnerability
-        print("url: ", url)
+        
         #print("xssScore: ", xssScore)
         #print("sqlInjScore", sqlInjScore)
-              
+
+    # Close the report
+    reportFile.close()              
               
 if __name__ == '__main__':
     main()
