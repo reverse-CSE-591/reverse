@@ -5,11 +5,10 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/items.html
 
-from scrapy.item import Field, Item
+import scrapy
 
-
-class CrawlerItem(Item):
+class RecursivecrawlingItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    url = Field()
-    form = Field()
+    target = scrapy.Field()
+    form = scrapy.Field()

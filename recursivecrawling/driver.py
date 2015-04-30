@@ -19,8 +19,10 @@ import json
 import urllib2
 from lxml import html
 from os import system
+import os.path
 import re
-
+import urllib
+from urlparse import urlparse
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
 
@@ -67,7 +69,9 @@ def getAllURLs(startURL, baseURL, opener):
 #####################################################################################################################
 
 def getFormForURl(domain, url, cookies):
-
+    parsedURL = urlparse(url)
+    fullPath=parsedURL.path+parsedURL.params+parsedURL.query
+    url = parsedURL.scheme+"://"+parsedURL.netloc+urllib.pathname2url(fullPath)
     system("scrapy crawl crawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+cookies+"\" -o items.json")
     data = open('items.json').read()
     system("rm items.json")        
@@ -106,9 +110,33 @@ def getFormForURl(domain, url, cookies):
 #       validResponse (String): returns the HTML string of the valid response
 #####################################################################################################################
 
-def getValidResponse(params, action, url):
+def getValidResponse(params, action, url,cookies):
     # do stuff here
+    formInput={} 
+    if(action == ""):
+	action = url
+    parsedURL = urlparse(url);
+    dirPath = os.path.split(parsedURL.path)
+    fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
+    if(parsedURL.netloc not in action):
+	action = parsedURL.scheme+"://"+parsedURL.netloc+action
+    print action
+    for param in params:
+	values=param.split('::')
+	if(values[0] != ""):
+		formInput[values[0]]="bhargavi"
+    validResponse = constructPostRequest(formInput,cookies,action)
+    #print validResponse
     return validResponse
+
+#####################################################################################################################
+# This method constructs a HTTP Post Request to submit the form to it
+def constructPostRequest(formInput,cookies,action):
+	header={'Cookie' :'cse591=kP047iYtubEZ6ZnMKmxO'}
+	request = urllib2.Request(action,urllib.urlencode(formInput),header)
+	response = urllib2.urlopen(request)
+	print response.info()
+	return response.read()
 
 #####################################################################################################################
 # This method takes in a form to be filled and the url and inserts <scripts> into the fields.
@@ -134,8 +162,23 @@ def getXssResponse(params, action):
 #       xssResponse (String): returns the HTML response
 #####################################################################################################################
 
-def getSqlInjResponse(params, action):
+def getSqlInjResponse(params, action, url, cookies ):
     # do stuff here
+    #print sqlInjResponse
+    formInput={} 
+    if(action == ""):
+	action = url
+    parsedURL = urlparse(url);
+    dirPath = os.path.split(parsedURL.path)
+    fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
+    if(parsedURL.netloc not in action):
+	action = parsedURL.scheme+"://"+parsedURL.netloc+action
+    print action
+    for param in params:
+	values=param.split('::')
+	if(values[0] != ""):
+		formInput[values[0]]="' or 1=1 --'"
+    sqlInjResponse = constructPostRequest(formInput,cookies,action)
     return sqlInjResponse
 
 #####################################################################################################################
@@ -171,18 +214,20 @@ def main():
     
     # Open report file
     reportFile= open('reverse_report.txt','w')
-        
+    responseFile=open('reverse_response.txt','w')
     # for each url crawl the page for     
     for url in urls:
         reportFile.write("url:: " + str(url) + "\n")
         (params, action) = getFormForURl(domain, url, cookies)
+	if params:
         reportFile.write("params:: " + str(params) + "\n")
         reportFile.write("action::" + str(action) + "\n")
 
         # Get responses for valid and invalid inputs
-        #validResponse = getValidResponse(params, action, url)        
+        #validResponse = getValidResponse(params, action, url,cookies)
         #xssResponse = getXssResponse(params, action) 
-        #sqlInjResponse = getSqlInjResponse(params, action)
+        sqlInjResponse = getSqlInjResponse(params, action, url, cookies)
+		responseFile.write(url+"::"+str(sqlInjResponse))
         # Get xss and SqlInjection score 
         #xssScore = getSimilarityScore(validResponse, xssResponse)
         #sqlInjScore = getSimilarityScore(validResponse, sqlInjResponse)

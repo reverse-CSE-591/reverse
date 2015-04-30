@@ -1,0 +1,9 @@
+# reverse
+Automated Vulnerability Analysis Tool 
+
+Current way of sending request:
+
+rm -f formdata.json
+rm -f crawledURLs.txt
+
+scrapy crawl ReverseCrawler -a domain="129.219.253.30:80" -a start_urls="https://129.219.253.30:80/" -a cookies="{'cse591':'kP047iYtubEZ6ZnMKmxO'}" -o formdata.json
