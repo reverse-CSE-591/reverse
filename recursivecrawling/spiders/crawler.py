@@ -46,8 +46,8 @@ class MySpider(BaseSpider):
 			 			
 			 for Name,Type in zip(Names,Types):
 				inputElementDictionary = {}
-				inputElementDictionary['type'] = Name
-				inputElementDictionary['name'] = Type
+				inputElementDictionary['name'] = Name
+				inputElementDictionary['type'] = Type
 				print inputElementDictionary
 				self.FormItem['form'].append(inputElementDictionary)
 			 links.append(urlparse.urljoin(response.url,self.FormItem['target'])) 

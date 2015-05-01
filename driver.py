@@ -23,6 +23,7 @@ import os.path
 import re
 import urllib
 from urlparse import urlparse
+import jsonReader
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
 
@@ -114,17 +115,19 @@ def getValidResponse(params, action, url,cookies):
     # do stuff here
     formInput={} 
     if(action == ""):
-	action = url
+	   action = url
     parsedURL = urlparse(url);
     dirPath = os.path.split(parsedURL.path)
     fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
     if(parsedURL.netloc not in action):
-	action = parsedURL.scheme+"://"+parsedURL.netloc+action
+	   action = parsedURL.scheme+"://"+parsedURL.netloc+action
     print action
     for param in params:
-	values=param.split('::')
-	if(values[0] != ""):
-		formInput[values[0]]="bhargavi"
+	   #values=param.split('::')
+	   if(param != ""):
+	       x = raw_input("Enter "+ param)
+           formInput[param] = x
+    print formInput
     validResponse = constructPostRequest(formInput,cookies,action)
     #print validResponse
     return validResponse
@@ -167,17 +170,17 @@ def getSqlInjResponse(params, action, url, cookies ):
     #print sqlInjResponse
     formInput={} 
     if(action == ""):
-	action = url
+	   action = url
     parsedURL = urlparse(url);
     dirPath = os.path.split(parsedURL.path)
     fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
     if(parsedURL.netloc not in action):
-	action = parsedURL.scheme+"://"+parsedURL.netloc+action
+	   action = parsedURL.scheme+"://"+parsedURL.netloc+action
     print action
     for param in params:
-	values=param.split('::')
-	if(values[0] != ""):
-		formInput[values[0]]="' or 1=1 --'"
+	   values=param.split('::')
+	   if(values[0] != ""):
+		  formInput[values[0]]="' or 1=1 --'"
     sqlInjResponse = constructPostRequest(formInput,cookies,action)
     return sqlInjResponse
 
@@ -196,6 +199,13 @@ def getSimilarityScore(html_1, html_2):
     return score
 
 
+def test(link):
+    params = []
+    for j in link['form']:
+        params.append(j['name'])
+    return (link['target'], params)
+
+
 #####################################################################################################################
 # This is the main method that gets called and submits the report on possible vulnerabilities
 #####################################################################################################################
@@ -207,11 +217,21 @@ def main():
     opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
     cookies = "{'cse591':'kP047iYtubEZ6ZnMKmxO'}"   
     domain = "129.219.253.30:80" 
-    
+    url = "https://129.219.253.30:80/"
     # get all the urls from the webApplication
-    getAllURLs("https://129.219.253.30:80/", "https://129.219.253.30:80/", opener)
-    print("urls-extracted: ", urls)
-    
+    system("rm items.json")
+    system("rm crawledURLs.txt")
+    system("scrapy crawl ReverseCrawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+cookies+"\" -o items.json")
+    with open("items.json") as data_file:
+        data = json.load(data_file)
+    for i in data:
+        (action, params) = test(i)
+        print action, params
+        validResponse = getValidResponse(params, action, url, cookies)
+        print validResponse
+    # getAllURLs("https://129.219.253.30:80/", "https://129.219.253.30:80/", opener)
+    #print("urls-extracted: ", urls)
+    '''
     # Open report file
     reportFile= open('reverse_report.txt','w')
     responseFile=open('reverse_response.txt','w')
@@ -238,7 +258,8 @@ def main():
         #print("sqlInjScore", sqlInjScore)
 
     # Close the report
-    reportFile.close()              
+    reportFile.close()
+    '''              
               
 if __name__ == '__main__':
     main()
