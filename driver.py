@@ -258,7 +258,7 @@ def main():
         responseFile.write(action + "\n")
         responseFile.write(str(params) + "\n")
         responseFile.write(BeautifulSoup(validResponse).get_text() + "\n")
-        responseFile.write("############################ Start SQL Injection response ############################\n")
+        responseFile.write("############################ Start SQL Injection response ###########################\n")
 	      
 	      
 	      # Attempt SQL Injection and Get the score
