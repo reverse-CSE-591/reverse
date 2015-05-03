@@ -15,15 +15,20 @@
 #####################################################################################################################
 
 # Python Imports
-import json
-import urllib2
+
+
+from bs4 import BeautifulSoup
 from lxml import html
-from os import system
-import os.path
-import re
-import urllib
+from os import system, path
 from urlparse import urlparse
+import json
+import math
+import re
 import requests
+import sys
+import urllib
+import urllib2
+
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
 
@@ -117,7 +122,7 @@ def getValidResponse(params, action, url,cookies):
     if(action == ""):
 	   action = url
     parsedURL = urlparse(url);
-    dirPath = os.path.split(parsedURL.path)
+    dirPath = path.split(parsedURL.path)
     fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
     if(parsedURL.netloc not in action):
 	   action = parsedURL.scheme+"://"+parsedURL.netloc+action
@@ -175,7 +180,7 @@ def getSqlInjResponse(params, action, url, cookies ):
     if(action == ""):
 	   action = url
     parsedURL = urlparse(url);
-    dirPath = os.path.split(parsedURL.path)
+    dirPath = path.split(parsedURL.path)
     fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
     if(parsedURL.netloc not in action):
 	   action = parsedURL.scheme+"://"+parsedURL.netloc+action
@@ -198,8 +203,46 @@ def getSqlInjResponse(params, action, url, cookies ):
 #####################################################################################################################
 
 def getSimilarityScore(html_1, html_2):
-    # do stuff here
-    return score
+    cleanResponse1 = BeautifulSoup(html_1).get_text()
+    cleanResponse2 = BeautifulSoup(html_2).get_text()
+    return calculateCosineSimilarity(formatVector(cleanResponse1), formatVector(cleanResponse2))
+
+def calculateCosineSimilarity(group1, group2):
+
+    doc1sq = doc2sq = frequency = 0
+
+    for i in group1:
+        if i in group2:
+            frequency += group1[i] * group2[i]
+
+    for j in group1:
+        doc1sq += math.pow(group1[j], 2)
+
+    for k in group2:
+        doc2sq += math.pow(group2[k], 2)
+
+    return frequency / (math.sqrt(doc1sq) * math.sqrt(doc2sq))
+
+    
+def formatVector(response):
+    cleanResponse = map(lambda x:re.split(" ", x), re.split("\n", response))
+    vectorList = []
+    vectorDict = {}
+    for i in cleanResponse:
+            vectorList.extend(i)
+    
+    vector = []
+    for i in vectorList:
+        if i != '':
+            vector.append(i.lower())
+
+    for j in vector:
+        if j in vectorDict:
+            vectorDict[j] += 1
+        else:
+            vectorDict[j] = 1
+
+    return vectorDict
 
 
 def test(link):

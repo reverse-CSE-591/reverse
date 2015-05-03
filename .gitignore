@@ -58,3 +58,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Reverse Ignores
+items.json
+crawledURLs.txt
