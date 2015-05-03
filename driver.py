@@ -31,6 +31,7 @@ import urllib2
 
 # This is a global set that contains all the URL's crawled from the website.
 urls = set()
+stopWords = []
 
 #####################################################################################################################
 # This method gets all the urls present on the website by recursively crawling the pages
@@ -225,6 +226,7 @@ def calculateCosineSimilarity(group1, group2):
 
     
 def formatVector(response):
+    global stopWords
     cleanResponse = map(lambda x:re.split(" ", x), re.split("\n", response))
     vectorList = []
     vectorDict = {}
@@ -233,7 +235,7 @@ def formatVector(response):
     
     vector = []
     for i in vectorList:
-        if i != '':
+        if i != '' or i not in stopWords:
             vector.append(i.lower())
 
     for j in vector:
@@ -253,11 +255,24 @@ def test(link):
 
 
 #####################################################################################################################
+# This method gets the list of stopwords
+# Output:
+#       stopwords (list[String]): all the stopwords
+#####################################################################################################################
+def getStopWords():
+    global stopWords
+    f = open("stopwords.en")
+    for i in f:
+        stopWords.append(re.sub("\n","",i))
+        
+
+#####################################################################################################################
 # This is the main method that gets called and submits the report on possible vulnerabilities
 #####################################################################################################################
 
 def main():   
     
+    getStopWords()
     # add the required headers, most likely its just the login cookie for the page.
     opener = urllib2.build_opener()
     opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
@@ -275,8 +290,8 @@ def main():
         print action, params
         #validResponse = getValidResponse(params, action, url, cookies)
         #print validResponse
-	validResponse1 = getSqlInjResponse(params, action, url, cookies)
-	print validResponse1
+	#validResponse1 = getSqlInjResponse(params, action, url, cookies)
+	#print validResponse1
     # getAllURLs("https://129.219.253.30:80/", "https://129.219.253.30:80/", opener)
     #print("urls-extracted: ", urls)
     '''
