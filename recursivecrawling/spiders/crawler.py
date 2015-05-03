@@ -1,4 +1,4 @@
-from scrapy.spider import BaseSpider
+from scrapy.spider import Spider
 from scrapy.selector import HtmlXPathSelector
 from recursivecrawling.items import RecursivecrawlingItem
 from scrapy.http import Request
@@ -6,7 +6,7 @@ import re
 import urlparse
 import ast
 
-class MySpider(BaseSpider):
+class MySpider(Spider):
 	name = "ReverseCrawler" 
 
 	def __init__(self, domain=None, start_urls=None, cookies=None):
@@ -22,11 +22,10 @@ class MySpider(BaseSpider):
 	def start_requests(self):
 	        return [Request(url=self.start_urls[0], cookies=self.cookies, callback=self.parse1)]
 
-	def parse1(self, response):
-		hxs = HtmlXPathSelector(response)
-		links = hxs.select("//a/@href").extract()
-		forms = hxs.select("//form")
-		scripts = hxs.select("//script/text()").extract()
+	def parse1(self, response):		
+		links = response.xpath("//a/@href")
+		forms = response.xpath("//form")
+		scripts = response.xpath("//script/text()")
 		self.FormItem = RecursivecrawlingItem()
 		self.FormItem['target'] = None
 		self.FormItem['form'] = []
