@@ -62,3 +62,5 @@ target/
 # Reverse Ignores
 items.json
 crawledURLs.txt
+reverse_report
+reverse_response
