@@ -209,41 +209,32 @@ def getSimilarityScore(html_1, html_2):
     return calculateCosineSimilarity(formatVector(cleanResponse1), formatVector(cleanResponse2))
 
 def calculateCosineSimilarity(group1, group2):
-
     doc1sq = doc2sq = frequency = 0
-
     for i in group1:
         if i in group2:
             frequency += group1[i] * group2[i]
-
     for j in group1:
         doc1sq += math.pow(group1[j], 2)
-
     for k in group2:
         doc2sq += math.pow(group2[k], 2)
-
     return frequency / (math.sqrt(doc1sq) * math.sqrt(doc2sq))
-
-    
+   
 def formatVector(response):
     global stopWords
     cleanResponse = map(lambda x:re.split(" ", x), re.split("\n", response))
     vectorList = []
     vectorDict = {}
     for i in cleanResponse:
-            vectorList.extend(i)
-    
+            vectorList.extend(i)    
     vector = []
     for i in vectorList:
         if i != '' or i not in stopWords:
             vector.append(i.lower())
-
     for j in vector:
         if j in vectorDict:
             vectorDict[j] += 1
         else:
             vectorDict[j] = 1
-
     return vectorDict
 
 
@@ -302,7 +293,7 @@ def main():
     for url in urls:
         reportFile.write("url:: " + str(url) + "\n")
         (params, action) = getFormForURl(domain, url, cookies)
-	if params:
+	  if params:
         reportFile.write("params:: " + str(params) + "\n")
         reportFile.write("action::" + str(action) + "\n")
 
@@ -310,7 +301,7 @@ def main():
         #validResponse = getValidResponse(params, action, url,cookies)
         #xssResponse = getXssResponse(params, action) 
         sqlInjResponse = getSqlInjResponse(params, action, url, cookies)
-		responseFile.write(url+"::"+str(sqlInjResponse))
+    		responseFile.write(url+"::"+str(sqlInjResponse))
         # Get xss and SqlInjection score 
         #xssScore = getSimilarityScore(validResponse, xssResponse)
         #sqlInjScore = getSimilarityScore(validResponse, sqlInjResponse)
