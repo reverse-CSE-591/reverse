@@ -1,4 +1,4 @@
-from scrapy.spider import Spider
+from scrapy.spider import BaseSpider
 from scrapy.selector import HtmlXPathSelector
 from recursivecrawling.items import RecursivecrawlingItem
 from scrapy.http import Request
@@ -6,7 +6,7 @@ import re
 import urlparse
 import ast
 
-class MySpider(Spider):
+class MySpider(BaseSpider):
 	name = "ReverseCrawler" 
 
 	def __init__(self, domain=None, start_urls=None, cookies=None):
@@ -23,9 +23,10 @@ class MySpider(Spider):
 	        return [Request(url=self.start_urls[0], cookies=self.cookies, callback=self.parse1)]
 
 	def parse1(self, response):		
-		links = response.xpath("//a/@href")
-		forms = response.xpath("//form")
-		scripts = response.xpath("//script/text()")
+  		hxs = HtmlXPathSelector(response)	
+ 		links = hxs.select("//a/@href").extract()
+		forms = hxs.select("//form")
+		scripts = hxs.select("//script/text()").extract()
 		self.FormItem = RecursivecrawlingItem()
 		self.FormItem['target'] = None
 		self.FormItem['form'] = []
@@ -42,11 +43,17 @@ class MySpider(Spider):
 				self.FormItem['target'] = urlparse.urljoin(response.url,action[0].replace("//","/"))
 			 Names = form.xpath("//input/@name").extract()
 			 Types = form.xpath("//input/@type").extract()
-			 			
+			 TextAreas = form.xpath("//textarea/@name").extract() 			
 			 for Name,Type in zip(Names,Types):
 				inputElementDictionary = {}
 				inputElementDictionary['name'] = Name
 				inputElementDictionary['type'] = Type
+				print inputElementDictionary
+				self.FormItem['form'].append(inputElementDictionary)
+			 for TextArea in TextAreas:
+				inputElementDictionary = {}
+				inputElementDictionary['name'] = TextArea
+				inputElementDictionary['type'] = "Textarea"
 				print inputElementDictionary
 				self.FormItem['form'].append(inputElementDictionary)
 			 links.append(urlparse.urljoin(response.url,self.FormItem['target'])) 
