@@ -16,7 +16,7 @@
 
 # Python Imports
 
-
+from __future__ import division
 from bs4 import BeautifulSoup
 from lxml import html
 from os import system, path
@@ -24,6 +24,7 @@ from urlparse import urlparse
 import ast
 import json
 import math
+import nltk
 import re
 import requests
 requests.packages.urllib3.disable_warnings()
@@ -205,7 +206,13 @@ def getStopWords():
     f = open("stopwords.en")
     for i in f:
         stopWords.append(re.sub("\n","",i))
-
+        
+# Get the edit-distance score between  two words
+def getEdidDistanceScore(word1, word2):        
+    distance = nltk.metrics.distance.edit_distance(word1, word2, transpositions=False)    
+    avgLength = (len(word1) + len(word2))/2
+    score = distance/avgLength
+    return score
 
 
 #####################################################################################################################
