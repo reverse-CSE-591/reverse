@@ -12,3 +12,4 @@ class RecursivecrawlingItem(scrapy.Item):
     # name = scrapy.Field()
     target = scrapy.Field()
     form = scrapy.Field()
+    source = scrapy.Field()

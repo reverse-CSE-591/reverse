@@ -30,12 +30,13 @@ class MySpider(BaseSpider):
 		self.FormItem = RecursivecrawlingItem()
 		self.FormItem['target'] = None
 		self.FormItem['form'] = []
+		self.FormItem['source'] = ''
 		for script in scripts:
 			if "window.location" in script:
 				SplitParts = script.split('"')
 				links.append(urlparse.urljoin(response.url,SplitParts[1]))
-
 		for form in forms:
+			 self.FormItem['source'] = form.extract()
 			 action = form.xpath("//@action").extract()
 			 if not action or action[0] == '':
 				self.FormItem['target'] = response.url

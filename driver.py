@@ -27,7 +27,7 @@ import math
 import nltk
 import re
 import requests
-requests.packages.urllib3.disable_warnings()
+#requests.packages.urllib3.disable_warnings()
 import sys
 import urllib
 import urllib2
@@ -197,7 +197,7 @@ def getFormParams(link):
     params = []
     for j in link['form']:
         params.append(j['name'])
-    return (link['target'], params)
+    return (link['target'], params, link['source'])
         
 
 # This method gets the list of stopwords
@@ -254,13 +254,13 @@ def main():
     
     # Iterate through all possible forms 
     for urlForm in UrlForms:                
-        (action, params) = getFormParams(urlForm)        
+        (action, params, source) = getFormParams(urlForm) 
         print "[INFO] action: ", action
         
         # Get the valid response
         validResponse = getValidResponse(params, action, url, cookies)        
         
-	      # Append the resposes to response file	      
+	# Append the resposes to response file
         responseFile.write("%%%%%%%%%%%%%%%%%%%%%%%%%% Start Valid Response %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
         responseFile.write(action + "\n")
         responseFile.write(str(params) + "\n")
@@ -268,7 +268,7 @@ def main():
         responseFile.write("############################ Start SQL Injection response ###########################\n")
 	      
 	      
-	      # Attempt SQL Injection and Get the score
+	# Attempt SQL Injection and Get the score
         sqlInjResponse = getSqlInjResponse(params, action, url, cookies)        
         responseFile.write(BeautifulSoup(sqlInjResponse).get_text() + "\n")
         responseFile.write("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Start XSS response @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")        
@@ -288,6 +288,21 @@ def main():
         reportFile.write("[XSS_Inj_Score]:: " + str(xssScore) + "\n\n")
         
         print "\n\n"
+
+        # Get Labels from the form
+        labels = []
+        source = source.replace("\n","")
+        for i in range(0, len(source)):
+            label = ''
+            if source[i] == '>':
+                while source[i] != '<':
+                    label += source[i]
+                    i = i + 1
+                    if i >= len(source) - 1:
+                        break;
+                if label[1:] and not label[1:].isspace():
+                    labels.append(label[1:])
+        print  labels
     
     # Close the report
     reportFile.close()     
