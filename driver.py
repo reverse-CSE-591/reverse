@@ -20,6 +20,7 @@ from __future__ import division
 from bs4 import BeautifulSoup
 from lxml import html
 from os import system, path
+from random import randint
 from urlparse import urlparse
 import ast
 import json
@@ -29,6 +30,7 @@ import re
 import requests
 #requests.packages.urllib3.disable_warnings()
 import sys
+import time
 import urllib
 import urllib2
 
@@ -186,6 +188,49 @@ def formatVector(response):
         else:
             vectorDict[j] = 1
     return vectorDict
+
+
+#####################################################################################################################
+# This method takes in the original label extracted, gets the similarity score and predicts the valid form entries
+# by understanding meaning of the labes and mapping them to known labels using dictionary similarity and edit-
+# distance score.
+#
+# TODO : Faced problems with wu-palmer similarity over wordNet (flase positives and not all terms present)
+#        Currently using just the edit distance
+#
+# Inputs:
+#       label (String): Label generated from the scarppy code extended
+# Output:
+#       generated value (String): Valid generated form input value
+#####################################################################################################################
+
+def getLabel(orglabel):
+    userset = ['user','username','user_name']
+    maxscore =0
+    newlabel =''
+    for field in userset:
+        score = getEdidDistanceScore(orglabel, field)
+        if(score > maxscore):
+            maxscore = score
+            newlabel = 'username'
+    print 'Max score' + str(maxscore), 'Label' + newlabel
+    if(maxscore<0.5):
+        newlabel = orglabel
+    return newlabel
+
+def generateValue(label, labeltype):
+    if labeltype == 'text':
+        newlabel = getLabel(label)
+        if newlabel == 'username':
+            return 'reverse'+ str(time.time())
+        else:
+            return 'reverserandom'+ str(time.time())
+    elif labeltype == 'password':
+        return 'reversePass'+ str(time.time())
+    elif labeltype == 'email':
+        return 'reverse'+str(time.time())+'@reverse.com'
+    elif labeltype == 'number':
+        return randint(0,10000)
 
          
 #####################################################################################################################
