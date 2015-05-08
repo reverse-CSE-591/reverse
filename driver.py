@@ -53,22 +53,11 @@ stopWords = []
 
 def getValidResponse(params, action, url, cookies):
     formInput={} 
-    if(action == ""):
-	      action = url
-    parsedURL = urlparse(url);
-    dirPath = path.split(parsedURL.path)
-    fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
-    if(parsedURL.netloc not in action):
-	      action = parsedURL.scheme+"://"+parsedURL.netloc+action
-    #print action
-    for param in params:	  
-        if(param != ""):
-            x = raw_input("Enter " + param + ": ")
-            formInput[param] = x
-    #print formInput
+    for key in params:	  
+        value = params[key]
+	formInput[key] = generateValue(value['label'],value['type'])
     print cookies, type(cookies)
     validResponse = constructPostRequest(formInput, cookies, action)
-    #print validResponse
     return validResponse
 
 #####################################################################################################################
@@ -95,19 +84,11 @@ def constructPostRequest(formInput, input_cookies, action):
 
 def getXssResponse(params, action, url, cookies):
     formInput={} 
-    if(action == ""):
-        action = url
-    parsedURL = urlparse(url);
-    dirPath = path.split(parsedURL.path)
-    fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
-    if(parsedURL.netloc not in action):
-        action = parsedURL.scheme+"://"+parsedURL.netloc+action
-    #print action
-    for param in params:           
-        if(param != ""):
-            formInput[param]="<sCript>xssAttack</sCript>"
-    sqlInjResponse = constructPostRequest(formInput,cookies,action)
-    return sqlInjResponse
+    for key in params:	  
+        value = params[key]
+	formInput[key]="<sCript>xssAttack</sCript>"
+    xssInjResponse = constructPostRequest(formInput,cookies,action)
+    return xssInjResponse
     
 def getXssScore(xssResponse, input_cookies): 
     urls = open("crawledURLs.txt")
@@ -129,17 +110,17 @@ def getXssScore(xssResponse, input_cookies):
 
 def getSqlInjResponse(params, action, url, cookies):        
     formInput={} 
-    if(action == ""):
-        action = url
-    parsedURL = urlparse(url);
-    dirPath = path.split(parsedURL.path)
-    fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
-    if(parsedURL.netloc not in action):
-        action = parsedURL.scheme+"://"+parsedURL.netloc+action
+    #if(action == ""):
+    #    action = url
+    #parsedURL = urlparse(url);
+    #dirPath = path.split(parsedURL.path)
+    #fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
+    #if(parsedURL.netloc not in action):
+    #    action = parsedURL.scheme+"://"+parsedURL.netloc+action
     #print action
-    for param in params:	   
-        if(param != ""):
-            formInput[param]="' or 1=1 --'"
+    for key in params:	  
+        value = params[key]
+	formInput[key] ="' or 1=1 --'"
     sqlInjResponse = constructPostRequest(formInput,cookies,action)
     return sqlInjResponse
 
@@ -239,10 +220,29 @@ def generateValue(label, labeltype):
 
 # Get the specific form parameters
 def getFormParams(link):
-    params = []
+    params = {}
+    # Get Labels from the form
+    labels = []
+    source = link['source'].replace("\n","")
+    for i in range(0, len(source)):
+    	label = ''
+    	if source[i] == '>':
+        	while source[i] != '<':
+                    label += source[i]
+                    i = i + 1
+                    if i >= len(source) - 1:
+                        break;
+                if label[1:] and not label[1:].isspace():
+                    labels.append(label[1:])
+    i = 0
     for j in link['form']:
-        params.append(j['name'])
-    return (link['target'], params, link['source'])
+	params[j['name']] = {}
+	params[j['name']]['type'] = j['type']
+	params[j['name']]['label'] = labels[0]
+	i = i + 1
+#        params.append(j['name'])
+    
+    return (link['target'], params)
         
 
 # This method gets the list of stopwords
@@ -317,7 +317,7 @@ def main():
     
     # Iterate through all possible forms 
     for urlForm in UrlForms:                
-        (action, params, source) = getFormParams(urlForm) 
+        (action, params) = getFormParams(urlForm) 
         print "[INFO] action: ", action
         
         # Get the valid response
@@ -351,22 +351,7 @@ def main():
         reportFile.write("[XSS_Inj_Score]:: " + str(xssScore) + "\n\n")
         
         print "\n\n"
-
-        # Get Labels from the form
-        labels = []
-        source = source.replace("\n","")
-        for i in range(0, len(source)):
-            label = ''
-            if source[i] == '>':
-                while source[i] != '<':
-                    label += source[i]
-                    i = i + 1
-                    if i >= len(source) - 1:
-                        break;
-                if label[1:] and not label[1:].isspace():
-                    labels.append(label[1:])
-        print  labels
-    
+		
     # Close the report
     reportFile.close()     
     responseFile.close()                          
