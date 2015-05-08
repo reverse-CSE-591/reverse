@@ -259,6 +259,24 @@ def getEdidDistanceScore(word1, word2):
     score = distance/avgLength
     return score
 
+#Get cookies from user
+def getCookies():
+    flag = 0
+    cookies = {}
+    print "Enter cookies(Press X to exit): "
+    while True:
+        if not flag:
+            key = raw_input("Enter Key: ")
+            flag = 1
+            if key == 'X':
+                break;
+        else:
+            value = raw_input("Enter value: ")
+            flag = 0
+            if value == 'X':
+                break;
+            cookies[key] = value
+    return cookies
 
 #####################################################################################################################
 # This is the main method that gets called and submits the report on possible vulnerabilities
@@ -272,9 +290,9 @@ def main():
     # Add the required headers, most likely its just the login cookie for the page.
     opener = urllib2.build_opener()
     opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
-    cookies = "{'cse591':'kP047iYtubEZ6ZnMKmxO', 'auth':'karth707:1234'}"   
     domain = "129.219.253.30:80" 
-    url = "https://129.219.253.30:80/~level07/"
+    url = raw_input("Enter the web address: ")
+    cookies = getCookies()
     
     # Remove any residual files
     system("rm items.json")
@@ -284,8 +302,8 @@ def main():
     
     
     # Use Scrappy to get recursively get all URLs, Stores the 
-    system("scrapy crawl ReverseCrawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+cookies+"\" -o items.json")
-    cookies = ast.literal_eval(cookies)
+    system("scrapy crawl ReverseCrawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+str(cookies)+"\" -o items.json")
+    #cookies = ast.literal_eval(cookies)
     
     # Iterate over all the URL's and their forms
     UrlForms = json.load(open("items.json"))
