@@ -1,6 +1,11 @@
 # reverse
 Automated Vulnerability Analysis Tool 
 
+Part Of Coursework for:
+CSE 591: Security and Vulnerability Analysis
+Arizona State University
+Spring 2015
+
 Current way of sending request:
 
 rm -f formdata.json
