@@ -1,19 +1,15 @@
 # reverse
 Automated Vulnerability Analysis Tool 
 
-<<<<<<< HEAD
 The tool takes an URL as its input ( the starting point of crawling ) and does the following:
 1) Crawls recursively through the URL uncovering all the links and forms that originate from this URL
 2) Performs SQL and XSS injection and computes a score.
 3) Generates a report containing the scores and their corresponding URLs.
-=======
+
 Part Of Coursework for:
 CSE 591: Security and Vulnerability Analysis
 Arizona State University
 Spring 2015
-
-Current way of sending request:
->>>>>>> e350f8d3c6a08075f484d5bd2b374dc826b00ee9
 
 Packages required for running the tool:
 
@@ -75,8 +71,6 @@ formdata.json --> JSON file containing the form data and URLs.
 reverse_report --> Report file that contains the vulnerabilities.
 reverse_response --> HTTP response generated after injection attacks.
 
-<<<<<<< HEAD
-=======
 scrapy crawl ReverseCrawler -a domain="129.219.253.30:80" -a start_urls="https://129.219.253.30:80/" -a cookies="{'cse591':'kP047iYtubEZ6ZnMKmxO'}" -o formdata.json
 
 ---------------------------------------------------------------------------------
