@@ -13,7 +13,7 @@ rm -f crawledURLs.txt
 
 scrapy crawl ReverseCrawler -a domain="129.219.253.30:80" -a start_urls="https://129.219.253.30:80/" -a cookies="{'cse591':'kP047iYtubEZ6ZnMKmxO'}" -o formdata.json
 
--------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 The MIT License (MIT)
 
 Copyright (c) [2015] [Bhargavi R., Kartheek N., Priya P., Ayush M., Nikhil A.]
