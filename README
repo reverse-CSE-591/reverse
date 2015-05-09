@@ -1,9 +1,68 @@
 # reverse
 Automated Vulnerability Analysis Tool 
 
-Current way of sending request:
+The tool takes an URL as its input ( the starting point of crawling ) and does the following:
+1) Crawls recursively through the URL uncovering all the links and forms that originate from this URL
+2) Performs SQL and XSS injection and computes a score.
+3) Generates a report containing the scores and their corresponding URLs.
 
-rm -f formdata.json
-rm -f crawledURLs.txt
+Packages required for running the tool:
 
-scrapy crawl ReverseCrawler -a domain="129.219.253.30:80" -a start_urls="https://129.219.253.30:80/" -a cookies="{'cse591':'kP047iYtubEZ6ZnMKmxO'}" -o formdata.json
+Assuming that pip works in the testing machine, the following command needs to be executed.
+The package python-pip needs to be installed using apt-get.
+
+1) Scrapy:
+
+pip install Scrapy
+
+2) Beautifulsoul
+
+pip install beautifulsoup4
+
+3) nltk
+
+pip install -U nltk
+
+The source code is organized as follows:
+
+reverse/	
+├── driver.py
+├── README
+├── recursivecrawling
+│   ├── __init__.py
+│   ├── items.py
+│   ├── pipelines.py
+│   ├── settings.py
+│   ├── settings.pyc
+│   └── spiders
+│       ├── crawler.py
+│       ├── __init__.py
+├── scrapy.cfg
+├── stopwords.en
+└── test.py
+
+TO RUN THE APPLICATION:
+
+python driver.py
+
+The tool is an interactive tool that takes input from the command line. The following input parameters are required to test it.
+Start URL - 
+Cookie key -
+Cookie Value -
+(As many cookies can be given)
+
+The inputs can also be given in a text file and the standard input can be redirected to this file. The input file must be given in the following format:
+
+https://129.219.253.30:80/
+cse591
+kP047iYtubEZ6ZnMKmxO
+X
+
+The character 'X' would terminate the passing of inputs.
+
+Once the application is done running, the following files are generated
+crawledURLs.txt --> File containing the list of crawled URLs.
+formdata.json --> JSON file containing the form data and URLs. 
+reverse_report --> Report file that contains the vulnerabilities.
+reverse_response --> HTTP response generated after injection attacks.
+
